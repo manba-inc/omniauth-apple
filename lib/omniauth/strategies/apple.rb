@@ -65,12 +65,26 @@ module OmniAuth
 
       private
 
+      # https://github.com/nhosoya/omniauth-apple/issues/103
+      # https://github.com/nhosoya/omniauth-apple/pull/106#issuecomment-1559825025
       def new_nonce
-        session['omniauth.nonce'] = SecureRandom.urlsafe_base64(16)
+        Rails.logger.info("#{self.class.name}\##{__method__} new_nonce")
+        nonce = SecureRandom.urlsafe_base64(16)
+        session["omniauth.nonce"] = nonce
+        cookies.encrypted[:apple_auth_params] =
+          { same_site: :none, expires: 1.hour.from_now, secure: true, value: nonce }
+        nonce
       end
 
       def stored_nonce
-        session.delete('omniauth.nonce')
+        Rails.logger.info("#{self.class.name}\##{__method__} stored_nonce")
+        nonce = session.delete("omniauth.nonce") || cookies.encrypted[:apple_auth_params]
+        cookies.delete :apple_auth_params
+        nonce
+      end
+
+      def cookies
+        request.env["action_dispatch.cookies"]
       end
 
       def id_info
