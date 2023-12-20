@@ -84,7 +84,11 @@ module OmniAuth
       end
 
       def cookies
-        request.env["action_dispatch.cookies"]
+        cookies = request.env["action_dispatch.cookies"]
+
+        Rails.logger.info("#{self.class.name}\##{__method__} cookies #{cookies.inspect}")
+
+        cookies
       end
 
       def id_info
